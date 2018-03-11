@@ -22,7 +22,7 @@ class Chart(Base):
                  subtitle_text_size=12,
                  background_color="#fff",
                  page_title=constants.PAGE_TITLE,
-                 jshost=None):
+                 renderer=constants.CANVAS_RENDERER):
         """
 
         :param title:
@@ -50,14 +50,15 @@ class Chart(Base):
         :param background_color:
             画布背景颜色，默认为 '#fff'
         :param page_title:
-            指定生成的 html 文件中 <title> 标签的值。默认为'Echarts'
-        :param jshost:
-            自定义每个实例的 JavaScript host
+            指定生成的 html 文件中 <title> 标签的值。默认为 'Echarts'
+        :param renderer:
+            指定使用渲染方式，有 'svg' 和 'canvas' 可选，默认为 'canvas'。
+            3D 图仅能使用 'canvas'。
         """
         super(Chart, self).__init__(
             width=width, height=height,
-            page_title=page_title,
-            jshost=jshost
+            renderer=renderer,
+            page_title=page_title
         )
         self._colorlst = [
             '#c23531', '#2f4554', '#61a0a8', '#d48265', '#749f83',
@@ -212,11 +213,13 @@ class Chart(Base):
             mark_line=None,
             mark_line_symbolsize=None,
             mark_line_valuedim=None,
+            mark_line_coords=None,
             mark_point=None,
             mark_point_symbol=None,
             mark_point_symbolsize=None,
             mark_point_textcolor=None,
             mark_point_valuedim=None,
+            pieces=None,
             radius_data=None,
             radius=None,
             rosetype=None,
@@ -235,6 +238,9 @@ class Chart(Base):
             tooltip_formatter=None,
             tooltip_text_color=None,
             tooltip_font_size=None,
+            tooltip_background_color=None,
+            tooltip_border_color=None,
+            tooltip_border_width=None,
             treemap_left_depth=None,
             treemap_drilldown_icon=None,
             treemap_visible_min=None,
@@ -359,4 +365,4 @@ class Chart(Base):
             )
 
         if not is_toolbox_show:
-            self._option.pop("toolbox")
+            self._option.pop("toolbox", None)

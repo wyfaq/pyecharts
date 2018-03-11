@@ -18,6 +18,7 @@ class Line(Chart):
 
     def __add(self, name, x_axis, y_axis,
               is_symbol_show=True,
+              symbol_size=4,
               is_smooth=False,
               is_stack=False,
               is_step=False,
@@ -46,7 +47,7 @@ class Line(Chart):
         :param kwargs:
         """
         assert len(x_axis) == len(y_axis)
-        kwargs.update(x_axis=x_axis, type="line")
+        kwargs.update(x_axis=x_axis, type="line", flag=True)
         chart = get_all_options(**kwargs)
 
         xaxis, yaxis = chart['xy_axis']
@@ -54,7 +55,6 @@ class Line(Chart):
             is_stack = "stack_" + str(self._option['series_id'])
         else:
             is_stack = ""
-        _area_style = {"normal": chart['area_style']} if is_fill else {}
         self._option.update(xAxis=xaxis, yAxis=yaxis)
         self._option.get('legend')[0].get('data').append(name)
 
@@ -62,6 +62,7 @@ class Line(Chart):
             "type": "line",
             "name": name,
             "symbol": chart['symbol'],
+            "symbolSize": symbol_size,
             "smooth": is_smooth,
             "step": is_step,
             "stack": is_stack,
@@ -69,7 +70,7 @@ class Line(Chart):
             "data": y_axis,
             "label": chart['label'],
             "lineStyle": chart['line_style'],
-            "areaStyle": _area_style,
+            "areaStyle": chart['area_style'],
             "markPoint": chart['mark_point'],
             "markLine": chart['mark_line'],
             "seriesId": self._option.get('series_id'),

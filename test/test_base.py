@@ -1,11 +1,9 @@
-#!/usr/bin/env python
 # coding=utf-8
 from __future__ import unicode_literals
 
 import os
 import sys
 import json
-import codecs
 
 import pandas as pd
 import numpy as np
@@ -13,18 +11,42 @@ import numpy as np
 from nose.tools import eq_
 from pyecharts import Bar, Map
 from test.constants import CLOTHES
-
+from test.utils import get_default_rendering_file_content
 
 TITLE = "柱状图数据堆叠示例"
 
 
-def create_a_bar(title):
+def create_a_bar(title, renderer='canvas'):
     v1 = [5, 20, 36, 10, 75, 90]
     v2 = [10, 25, 8, 60, 20, 80]
-    bar = Bar(title)
+    bar = Bar(title, renderer=renderer)
     bar.add("商家A", CLOTHES, v1, is_stack=True)
     bar.add("商家B", CLOTHES, v2, is_stack=True)
     return bar
+
+
+def test_svg_option():
+    bar = create_a_bar(TITLE, renderer='svg')
+    html = bar.render_embed()
+    assert "{renderer: 'svg'}" in html
+
+
+def test_svg_option_in_note_book():
+    bar = create_a_bar(TITLE, renderer='svg')
+    html = bar._repr_html_()
+    assert "{renderer: 'svg'}" in html
+
+
+def test_canvas_option():
+    bar = create_a_bar(TITLE)
+    html = bar.render_embed()
+    assert "{renderer: 'canvas'}" in html
+
+
+def test_canvas_option_in_notebook():
+    bar = create_a_bar(TITLE)
+    html = bar._repr_html_()
+    assert "{renderer: 'canvas'}" in html
 
 
 def test_embed_option():
@@ -34,33 +56,6 @@ def test_embed_option():
     assert json_encoded_title in html
     assert "<html>" not in html
     assert "<body>" not in html
-
-
-def test_notebook_render():
-    bar = create_a_bar(TITLE)
-    html = bar._repr_html_()
-    json_encoded_title = json.dumps(TITLE)
-    assert json_encoded_title in html
-    assert "require.config" in html
-    assert "function(ec)" in html
-
-
-def test_notebook_dom():
-    bar = create_a_bar(TITLE)
-    html = bar._render_notebook_dom_()
-    assert bar._chart_id in html
-    assert str(bar.width) in html
-    assert str(bar.height) in html
-    assert "<div" in html
-
-
-def test_notebook_component():
-    bar = create_a_bar(TITLE)
-    html = bar._render_notebook_component_()
-    json_encoded_title = json.dumps(TITLE)
-    assert json_encoded_title in html
-    assert "myChart" in html
-    assert bar._chart_id in html
 
 
 def test_base_get_js_dependencies():
@@ -103,9 +98,8 @@ def test_echarts_position_in_render_html():
     map.add("", attr, value, maptype='广东',
             is_visualmap=True, visual_text_color='#000')
     map.render()
-    with codecs.open('render.html', 'r', 'utf-8') as f:
-        actual_content = f.read()
-        assert TITLE in actual_content
+    actual_content = get_default_rendering_file_content()
+    assert TITLE in actual_content
 
 
 def test_show_config():
@@ -115,7 +109,7 @@ def test_show_config():
         with open(captured_stdout, 'w') as f:
             sys.stdout = f
             bar = create_a_bar("new")
-            bar.show_config()
+            bar.print_echarts_options()
     except Exception as e:
         # whatever happens, continue and restore stdout
         print(e)

@@ -1,8 +1,10 @@
 # coding=utf-8
 
+from jinja2 import Markup
+
 import pyecharts.utils as utils
 import pyecharts.engine as engine
-import pyecharts.conf as conf
+from pyecharts.conf import CURRENT_CONFIG
 import pyecharts.constants as constants
 
 
@@ -11,10 +13,9 @@ class Page(list):
     A composite object to present multiple charts vertically in a single page
     """
 
-    def __init__(self, jshost=None, page_title=constants.PAGE_TITLE):
+    def __init__(self, page_title=constants.PAGE_TITLE):
         list.__init__([])
         self._page_title = page_title
-        self._jshost = jshost if jshost else conf.SCRIPT_LOCAL_JSHOST
 
     def add(self, achart_or_charts):
         """
@@ -33,10 +34,14 @@ class Page(list):
                template_name='simple_page.html',
                object_name='page',
                extra_context=None):
-        context = {object_name: self}
-        context.update(extra_context or {})
-        html = engine.render(template_name, **context)
-        utils.write_utf8_html_file(path, html)
+        env = engine.create_default_environment()
+        env.render_chart_to_file(
+            chart=self,
+            object_name=object_name,
+            path=path,
+            template_name=template_name,
+            extra_context=extra_context
+        )
 
     def render_embed(self):
         """
@@ -44,51 +49,36 @@ class Page(list):
 
         :return:
         """
-        return '<br/> '.join([chart.render_embed() for chart in self])
+        return Markup('<br/> '.join([chart.render_embed() for chart in self]))
 
     def get_js_dependencies(self):
         """
         Declare its javascript dependencies for embedding purpose
         """
-        unordered_js_dependencies = self._merge_dependencies()
-        return conf.CURRENT_CONFIG.produce_html_script_list(
-            unordered_js_dependencies)
+        return CURRENT_CONFIG.produce_html_script_list(
+            self.js_dependencies)
 
     def _repr_html_(self):
         """
 
         :return:
         """
-        doms = components = ""
-        dependencies = self._merge_dependencies()
-        for chart in self:
-            doms += chart._render_notebook_dom_()
-            components += chart._render_notebook_component_()
-
-        require_config = conf.CURRENT_CONFIG.produce_require_configuration(
-            dependencies,
-            conf.CURRENT_CONFIG.get_current_jshost_for_jupyter(self._jshost)
+        dependencies = self.js_dependencies
+        require_config = CURRENT_CONFIG.produce_require_configuration(
+            dependencies)
+        config_items = require_config['config_items']
+        libraries = require_config['libraries']
+        env = engine.create_default_environment()
+        return env.render_chart_to_notebook(
+            charts=self,
+            config_items=config_items,
+            libraries=libraries
         )
-        return engine.render("notebook.html",
-                             single_chart=components,
-                             dom=doms,
-                             **require_config)
-
-    def _merge_dependencies(self):
-        dependencies = set()
-        for chart in self:
-            dependencies = dependencies.union(chart._js_dependencies)
-        # make sure echarts is the item in the list
-        # require(['echarts'....], function(ec) {..}) need it to be first
-        # but dependencies is a set so has no sequence
-        if len(dependencies) > 1:
-            dependencies.remove('echarts')
-            dependencies = ['echarts'] + list(dependencies)
-        return dependencies
 
     @property
     def js_dependencies(self):
-        return self._merge_dependencies()
+        # Treat self as a list,not a page
+        return utils.merge_js_dependencies(*self)
 
     @property
     def page_title(self):

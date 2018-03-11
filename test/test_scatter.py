@@ -40,13 +40,6 @@ def test_scatter_visualmap_type_size():
     scatter.render()
 
 
-def test_scatter_draw_pyecharts():
-    scatter = Scatter("散点图示例")
-    v1, v2 = scatter.draw("../images/pyecharts-0.png")
-    scatter.add("pyecharts", v1, v2, is_random=True)
-    scatter.render()
-
-
 def test_scatter_draw_love():
     scatter = Scatter("散点图示例", width=800, height=480)
     v1, v2 = scatter.draw("../images/love.png")
@@ -58,13 +51,6 @@ def test_scatter_draw__hot_red_bra():
     scatter = Scatter("散点图示例", width=1000, height=480)
     v1, v2 = scatter.draw("../images/cup.png")
     scatter.add("Cup", v1, v2)
-    scatter.render()
-
-
-def test_scatter_draw_sexy_black_bra():
-    scatter = Scatter("散点图示例", width=1000, height=480)
-    v1, v2 = scatter.draw("../images/cup.png")
-    scatter.add("Cup", v1, v2, label_color=["#000"])
     scatter.render()
 
 
@@ -100,3 +86,9 @@ def test_scatter_multi_dimension():
            visual_type='size', visual_range=[254830, 1154605773],
            visual_text_color='#000')
     sc.render()
+
+
+def test_scatter_markline_coords():
+    scatter = Scatter("散点图示例")
+    scatter.add("A", v1, v2, mark_line_coords=[[10, 10], [30, 30]])
+    assert '"coord": [' in scatter._repr_html_()
